@@ -1,0 +1,7 @@
+name: "native"
+
+platforms:
+    x86_64-osx:
+        context:
+            flags:      ["-std=c++11"]
+            libs:       ["c++"]

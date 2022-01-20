@@ -1,0 +1,94 @@
+local n28s = require('libs.n28s')
+
+local script = n28s.new()
+
+local function next_power_of_2(value)
+	return math.pow(2, math.ceil(math.log(value) / math.log(2)))
+end
+
+local function get_render_target_size()
+	return next_power_of_2(render.get_window_width()), next_power_of_2(render.get_window_height())
+end
+
+function script:init()
+	self.view = vmath.matrix4()
+	self.clear_bits = {[render.BUFFER_COLOR_BIT] = vmath.vector4(0, 0, 0, 1), [render.BUFFER_DEPTH_BIT] = 1, [render.BUFFER_STENCIL_BIT] = 0}
+	self.identity_matrix = vmath.matrix4()
+	local width = render.get_window_width()
+	local height = render.get_window_height()
+
+	--self.screenquad_pred = render.predicate{'screenquad'}
+	self.gui_pred = render.predicate({"gui"})
+	self.text_pred = render.predicate({"text"})
+	self.particle_pred = render.predicate({"particle"})
+
+	self.constants = render.constant_buffer()
+	--[[self.rt_width, self.rt_height = get_render_target_size()
+	self.render_target = render.render_target('native_target', {
+		[render.BUFFER_COLOR_BIT] = {
+			format = render.FORMAT_RGBA,
+			width = self.rt_width,
+			height = self.rt_height
+		},
+		[render.BUFFER_DEPTH_BIT] = {
+			format = render.FORMAT_DEPTH,
+			width = self.rt_width,
+			height = self.rt_height
+		}
+	})]]
+	native.init(width, height)
+end
+
+--[[function script:set_screenquad_view_projection()
+	render.set_viewport(0, 0, camera.width, camera.height)
+	render.set_view(self.identity_matrix)
+	render.set_projection(vmath.matrix4_orthographic(-0.5, -0.5 + camera.width / self.rt_width, -0.5,  -0.5 + camera.height / self.rt_height, -1, 1))
+end]]
+
+function script:update(dt)
+	local width = render.get_window_width()
+	local height = render.get_window_height()
+	native.render(dt)
+
+	render.set_viewport(0, 0, width, height)
+
+	--[[render.clear(self.clear_bits)
+	self:set_screenquad_view_projection()
+
+	render.disable_state(render.STATE_CULL_FACE)
+	render.disable_state(render.STATE_STENCIL_TEST)
+	render.disable_state(render.STATE_DEPTH_TEST)
+	render.disable_state(render.STATE_BLEND)
+	render.set_depth_mask(true)
+
+	render.enable_texture(0, self.render_target, render.BUFFER_COLOR_BIT)
+	render.draw(self.screenquad_pred)
+	render.disable_texture(0, self.render_target)]]
+
+	-- render GUI
+	--
+	render.set_view(self.identity_matrix)
+	render.set_projection(vmath.matrix4_orthographic(0, width, 0, height, -1, 1))
+
+	render.enable_state(render.STATE_BLEND)
+    render.set_blend_func(render.BLEND_SRC_ALPHA, render.BLEND_ONE_MINUS_SRC_ALPHA)
+	render.disable_state(render.STATE_CULL_FACE)
+	render.disable_state(render.STATE_DEPTH_TEST)
+	render.enable_state(render.STATE_STENCIL_TEST)
+	render.draw(self.gui_pred)
+	render.draw(self.text_pred)
+	render.disable_state(render.STATE_STENCIL_TEST)
+end
+
+function script:message_window_resized(message)
+	local width = render.get_window_width()
+	local height = render.get_window_height()
+	--[[local rt_width, rt_height = get_render_target_size()
+	if rt_width ~= self.rt_width or rt_height ~= self.rt_height then
+		self.rt_width, self.rt_height = rt_width, rt_height
+		render.set_render_target_size(self.render_target, rt_width, rt_height)
+	end]]
+	native.set_screen_size(width, height)
+end
+
+n28s.register(script)

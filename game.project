@@ -1,0 +1,37 @@
+[bootstrap]
+main_collection = /main/main.collectionc
+render = /render/main.renderc
+
+[script]
+shared_state = 1
+
+[display]
+width = 512
+height = 512
+high_dpi = 1
+vsync = 0
+dynamic_orientation = 1
+update_frequency = 60
+
+[project]
+title = Defold Raylib
+custom_resources = /resources
+
+[html5]
+scale_mode = stretch
+show_made_with_defold = 0
+show_fullscreen_button = 0
+show_console_banner = 0
+
+[physics]
+type = 3D
+
+[graphics]
+verify_graphics_calls = 0
+
+[android]
+immersive_mode = 1
+
+[input]
+use_accelerometer = 0
+

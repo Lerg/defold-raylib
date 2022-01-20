@@ -1,0 +1,93 @@
+local colors = require('libs.colors')
+local hashed = require('libs.hashed')
+
+local light_type = {
+	directional = 0,
+	point = 1
+}
+
+local function sync_object_position_and_rotation(object)
+	native.set_game_object_position(object.id, go.get_world_position(object.instance))
+	native.set_game_object_rotation(object.id, go.get_world_rotation(object.instance))
+end
+
+local function update_camera(self, dt)
+	self.camera_rotation = self.camera_rotation * vmath.quat_rotation_y(0.2 * dt)
+	local camera_position = vmath.rotate(self.camera_rotation, vmath.vector3(12, 0, 0))
+	camera_position.y = 8
+	native.set_camera_position(camera_position)
+	native.set_camera_target(vmath.vector3(0, 1, 0))
+	native.set_camera_up(vmath.vector3(0, 1, 0))
+end
+
+local function update_lights(self, dt)
+	self.light_rotation = self.light_rotation * vmath.quat_rotation_y(0.1 * dt)
+	for i = 1, #self.lights do
+		local light = self.lights[i]
+		local light_position = vmath.rotate(self.light_rotation * vmath.quat_rotation_y((i - 1) * 2 * math.pi / 4), vmath.vector3(6, 0, 0))
+		light_position.y = 4
+		native.set_light_position(light, light_position)
+	end
+end
+
+local function update_targets(self, dt)
+	if self.spawn_time > self.spawn_interval and #self.targets < 100 then
+		self.spawn_time = 0
+		local d = 10
+		local position = vmath.vector3(math.random(-d, d), math.random(d, 2 * d), math.random(-d, d))
+		local target = {
+			id = native.create_target(),
+			instance = factory.create('/factory#target', position),
+		}
+		native.set_game_object_position(target.id, position)
+		native.set_game_object_scale(target.id, vmath.vector3(4, 4, 4))
+		go.set(msg.url(nil, target.instance, 'collisionobject'), hashed.angular_velocity, vmath.vector3(math.random(), math.random(), math.random()))
+		table.insert(self.targets, target)
+	else
+		self.spawn_time = self.spawn_time + dt
+	end
+	for i = 1, #self.targets do
+		sync_object_position_and_rotation(self.targets[i])
+	end
+end
+
+function init(self)
+	math.randomseed(os.time())
+	self.camera_rotation = vmath.quat()
+	self.light_rotation = vmath.quat()
+
+	local directional_light = native.create_light(light_type.directional)
+	native.set_light_position(directional_light, vmath.vector3(-1, 1, -1))
+	native.set_light_color(directional_light, 0.8 * vmath.vector3(1, 0.95, 0.9))
+
+	self.lights = {}
+	for i = 1, 3 do
+		local light = native.create_light(light_type.point)
+		local r, g, b = colors.hsv_to_rgb(math.random(1, 359), 1, 0.5)
+		native.set_light_position(light, vmath.vector3(-1, 1, -1))
+		native.set_light_color(light, vmath.vector3(r, g, b))
+		table.insert(self.lights, light)
+	end
+
+	local position = vmath.vector3(0, -2, 0)
+	local road = {
+		id = native.create_road(),
+		instance = factory.create('/factory#road', position)
+	}
+	native.set_game_object_position(road.id, position)
+	native.set_game_object_scale(road.id, vmath.vector3(20, 20, 20))
+
+	self.targets = {}
+	self.spawn_time = 10
+	self.spawn_interval = 1
+end
+
+function update(self, dt)
+	update_targets(self, dt)
+	update_camera(self, dt)
+	update_lights(self, dt)
+end
+
+function final(self)
+	native.clear_objects()
+end

@@ -1,0 +1,11 @@
+{
+	"cmake.configureOnOpen": false,
+	"files.associations": {
+		"raymath.h": "c",
+		"config.h": "c",
+		"vox_loader.h": "c",
+		"__functional_03": "cpp",
+		"functional": "cpp",
+		"__node_handle": "cpp"
+	}
+}
